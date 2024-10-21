@@ -14,6 +14,7 @@ from tf2_msgs.msg import TFMessage
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import TransformStamped
 from mavros_msgs.msg import CompanionProcessStatus
+from vision.msg import VioState
 
 class TFToOdometry:
     def __init__(self):
@@ -21,6 +22,7 @@ class TFToOdometry:
         rospy.init_node('vio_mavros_bridge',anonymous = False)      
         self.odom_pub = rospy.Publisher('/mavros/odometry/out', Odometry, queue_size=10)
         self.cps_pub = rospy.Publisher('/mavros/companion_process/status', CompanionProcessStatus, queue_size=10)
+        self.viostate_pub = rospy.Publisher('/vision/vio_state', VioState, queue_size=10)
         
         self.latest_odom_data = None
         self.tf_broadcaster = tf.TransformBroadcaster()

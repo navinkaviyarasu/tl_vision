@@ -36,6 +36,7 @@ import odometry3d_capnp as eCALOdometry3d
 import rospy
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import TransformStamped
+from vision.msg import VioState
 import tf2_ros
 
 import tf
@@ -98,6 +99,7 @@ class RosOdometryPublisher:
     def __init__(self, ros_tf_prefix : str, topic : str, use_monotonic : bool, no_tf_publisher : bool) -> None:
         self.first_message = True
         self.ros_odom_pub = rospy.Publisher(topic, Odometry, queue_size=10)
+        self.viostate_pub = rospy.Publisher('/vision/vio_state', VioState, queue_size=10)
         self.use_monotonic = use_monotonic
         self.no_tf_publisher = no_tf_publisher
         self.ros_tf_prefix = ros_tf_prefix + "/"
@@ -184,8 +186,10 @@ class RosOdometryPublisher:
     def callback(self, topic_name, msg, time_ecal):
 
         # need to remove the .decode() function within the Python API of ecal.core.subscriber ByteSubscriber
-        
+        # print("First message", self.first_message)
         with eCALOdometry3d.Odometry3d.from_bytes(msg) as odometryMsg:
+
+            
 
             if self.first_message:
                 print(f"bodyFrame = {odometryMsg.bodyFrame}")
@@ -238,6 +242,18 @@ class RosOdometryPublisher:
             ros_msg.pose.pose.orientation.y = odometryMsg.pose.orientation.y
             ros_msg.pose.pose.orientation.z = odometryMsg.pose.orientation.z
 
+            vio_state = VioState();
+            vio_state.header.seq = odometryMsg.header.seq
+            vio_state.header.stamp = rospy.Time.now()
+            vio_state.header.frame_id = "odom"
+            vio_state.vision_failure = odometryMsg.metricVisionFailureLikelihood
+            vio_state.inertial_failure = odometryMsg.metricInertialFailureLikelihood
+            vio_state.failure_drfit = odometryMsg.estimatedFailureModeDrift
+            vio_state.vio_failure = odometryMsg.metricFailureVio
+
+            self.viostate_pub.publish(vio_state)
+
+
             self.ros_odom_pub.publish(ros_msg)
 
             # publish
@@ -266,7 +282,7 @@ def main():
     # print eCAL version and date
     print("eCAL {} ({})\n".format(ecal_core.getversion(), ecal_core.getdate()))
 
-    topic_ecal = "S0/vio_odom"
+    topic_ecal = "S1/vio_odom"
     topic_ros = "/basalt/odom"
 
     parser = argparse.ArgumentParser()
