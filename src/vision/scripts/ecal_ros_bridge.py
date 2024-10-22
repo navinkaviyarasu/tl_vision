@@ -26,10 +26,6 @@ import pathlib
 
 current_path = str(pathlib.Path(__file__).parent.resolve())
 
-#print("working in path " + current_path)
-
-
-# capnp_schema_path = '/home/nk/Workspace/vilota/ecal-common/src/capnp'
 capnp_schema_path = current_path + '/../src/capnp'
 capnp.add_import_hook([capnp_schema_path])
 
