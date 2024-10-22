@@ -2,6 +2,7 @@
 
 #**************************************************************#
 # Default ecal- ros bridge provided by Vilota Development
+# Modified by TL for the application
 #
 # Cuurent Changes:
 # Line 267 -  S0/basalt/odom_ned to S0/basalt/odom -  Helped connect the tf trees
@@ -23,12 +24,13 @@ import ecal.core.core as ecal_core
 
 import pathlib
 
-#current_path = str(pathlib.Path(__file__).parent.resolve())
+current_path = str(pathlib.Path(__file__).parent.resolve())
 
 #print("working in path " + current_path)
 
 
-capnp_schema_path = '/home/nk/Workspace/vilota/ecal-common/src/capnp'
+# capnp_schema_path = '/home/nk/Workspace/vilota/ecal-common/src/capnp'
+capnp_schema_path = current_path + '/../src/capnp'
 capnp.add_import_hook([capnp_schema_path])
 
 import odometry3d_capnp as eCALOdometry3d
@@ -98,6 +100,7 @@ class RosOdometryPublisher:
 
     def __init__(self, ros_tf_prefix : str, topic : str, use_monotonic : bool, no_tf_publisher : bool) -> None:
         self.first_message = True
+        print("topic:",topic)
         self.ros_odom_pub = rospy.Publisher(topic, Odometry, queue_size=10)
         self.viostate_pub = rospy.Publisher('/vision/vio_state', VioState, queue_size=10)
         self.use_monotonic = use_monotonic
@@ -303,7 +306,7 @@ def main():
 
     rospy.init_node("ros_odometry_publisher")
 
-
+    # ros_topic = "/S0/basalt/odom"
     ros_odometry_pub = RosOdometryPublisher(args.ros_tf_prefix, args.ros_topic_out, args.monotonic_time, args.no_tf_publisher)
 
     # create subscriber and connect callback

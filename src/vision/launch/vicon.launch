@@ -1,0 +1,6 @@
+<launch>
+
+    <node pkg="vision" type="vicon_mavros_bridge.py" name="vicon_mavros_bridge" output="screen" />
+    <node pkg="tf" type="static_transform_publisher" name="static_transform1" args="0 0 0 0 0 0 map odom 100" />
+        
+</launch>

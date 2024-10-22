@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #_________________________________________________#
 #
-# Current script - Beta, under testing
+# Current script - Stable
 # Subscribe odometry from /S0/basalt/odom to ensure proper data retrieval
 # In addition to publish data to /mavros/odometry/out, data is also 
 # broadcasted to tf for frames base_link and odom to complete the tf tree
@@ -14,50 +14,41 @@ from tf2_msgs.msg import TFMessage
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import TransformStamped
 from mavros_msgs.msg import CompanionProcessStatus
-from vision.msg import VioState
 
 class TFToOdometry:
     def __init__(self):
 
         rospy.init_node('vio_mavros_bridge',anonymous = False)      
         self.odom_pub = rospy.Publisher('/mavros/odometry/out', Odometry, queue_size=10)
-        self.cps_pub = rospy.Publisher('/mavros/companion_process/status', CompanionProcessStatus, queue_size=10)
-        self.viostate_pub = rospy.Publisher('/vision/vio_state', VioState, queue_size=10)
-        
+        self.cps_pub = rospy.Publisher('/mavros/companion_process/status', CompanionProcessStatus, queue_size=10)        
         self.latest_odom_data = None
         self.tf_broadcaster = tf.TransformBroadcaster()
         rospy.Subscriber('/S0/basalt/odom', Odometry, self.odometry_callback)
-        self.rate = rospy.Rate(40)
+        self.rate = rospy.Rate(40)    #rate control for publish rate
         
     def odometry_callback(self, odom_data):
-        #print("test")
+
         self.latest_odom_data = odom_data
-       # print(self.latest_odom_data)
         
     def run(self):
     
-
         while not rospy.is_shutdown():
             if self.latest_odom_data:
     
                 odometry_msg = Odometry()
-                transform = self.latest_odom_data
+                odom_data = self.latest_odom_data
                 
-                odometry_msg.header = transform.header
+                odometry_msg.header = odom_data.header
                 odometry_msg.header.stamp = rospy.Time.now()
                 odometry_msg.header.frame_id = "odom"
-                odometry_msg.child_frame_id = "base_link"
-                
-                #x & y  have been interchanged to tally the 90deg offset
-                #To convert the NWU(VIO coordinate frame) to ENU(odom coordinate frame)
-                
-                odometry_msg.pose.pose.position.x = transform.pose.pose.position.x
-                odometry_msg.pose.pose.position.y = (transform.pose.pose.position.y)
-                odometry_msg.pose.pose.position.z = transform.pose.pose.position.z
-                odometry_msg.pose.pose.orientation.x = transform.pose.pose.orientation.x
-                odometry_msg.pose.pose.orientation.y = transform.pose.pose.orientation.y
-                odometry_msg.pose.pose.orientation.z = transform.pose.pose.orientation.z
-                odometry_msg.pose.pose.orientation.w = transform.pose.pose.orientation.w
+                odometry_msg.child_frame_id = "base_link" 
+                odometry_msg.pose.pose.position.x = odom_data.pose.pose.position.x
+                odometry_msg.pose.pose.position.y = (odom_data.pose.pose.position.y)
+                odometry_msg.pose.pose.position.z = odom_data.pose.pose.position.z
+                odometry_msg.pose.pose.orientation.x = odom_data.pose.pose.orientation.x
+                odometry_msg.pose.pose.orientation.y = odom_data.pose.pose.orientation.y
+                odometry_msg.pose.pose.orientation.z = odom_data.pose.pose.orientation.z
+                odometry_msg.pose.pose.orientation.w = odom_data.pose.pose.orientation.w
                 
                 tf_pose = odometry_msg.pose.pose
                 
@@ -80,8 +71,7 @@ class TFToOdometry:
                     tf.child_frame_id,
                     tf.header.frame_id
                 )
-                
-                
+                  
                 cps_msg = CompanionProcessStatus()
                 cps_msg.header.stamp = rospy.Time.now()
                 cps_msg.state = CompanionProcessStatus.MAV_STATE_ACTIVE

@@ -1,0 +1,11 @@
+<launch>
+
+    <node pkg="vision" type="ecal_ros_bridge.py" name="ros_odometry_publisher" output="screen">
+    </node>
+    <node pkg="vision" type="vio_mavros_bridge.py" name="vio_mavros_bridge" output="screen">
+    </node>
+    <node pkg="tf" type="static_transform_publisher" name="static_transform1" args="0 0 0 0 0 0 map odom 100" />
+    <node pkg="tf" type="static_transform_publisher" name="static_transform2" args="0 0 0 0 0 0 base_link S0/odom 100" />
+    
+</launch>
+    
