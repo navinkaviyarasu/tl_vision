@@ -36,49 +36,50 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import TransformStamped
 from vision.msg import VioState
 import tf2_ros
-
 import tf
 
+from byte_subscriber import ByteSubscriber
 
-from ecal.core.subscriber import MessageSubscriber
 
-class ByteSubscriber(MessageSubscriber):
-  """Specialized publisher subscribes to raw bytes
-  """
-  def __init__(self, name):
-    topic_type = "base:byte"
-    super(ByteSubscriber, self).__init__(name, topic_type)
-    self.callback = None
+# from ecal.core.subscriber import MessageSubscriber
 
-  def receive(self, timeout=0):
-    """ receive subscriber content with timeout
+# class ByteSubscriber(MessageSubscriber):
+#   """Specialized publisher subscribes to raw bytes
+#   """
+#   def __init__(self, name):
+#     topic_type = "base:byte"
+#     super(ByteSubscriber, self).__init__(name, topic_type)
+#     self.callback = None
 
-    :param timeout: receive timeout in ms
+#   def receive(self, timeout=0):
+#     """ receive subscriber content with timeout
 
-    """
-    ret, msg, time = self.c_subscriber.receive(timeout)
-    return ret, msg, time
+#     :param timeout: receive timeout in ms
 
-  def set_callback(self, callback):
-    """ set callback function for incoming messages
+#     """
+#     ret, msg, time = self.c_subscriber.receive(timeout)
+#     return ret, msg, time
 
-    :param callback: python callback function (f(topic_name, msg, time))
+#   def set_callback(self, callback):
+#     """ set callback function for incoming messages
 
-    """
-    self.callback = callback
-    self.c_subscriber.set_callback(self._on_receive)
+#     :param callback: python callback function (f(topic_name, msg, time))
 
-  def rem_callback(self, callback):
-    """ remove callback function for incoming messages
+#     """
+#     self.callback = callback
+#     self.c_subscriber.set_callback(self._on_receive)
 
-    :param callback: python callback function (f(topic_name, msg, time))
+#   def rem_callback(self, callback):
+#     """ remove callback function for incoming messages
 
-    """
-    self.c_subscriber.rem_callback(self._on_receive)
-    self.callback = None
+#     :param callback: python callback function (f(topic_name, msg, time))
 
-  def _on_receive(self, topic_name, msg, time):
-    self.callback(topic_name, msg, time)    
+#     """
+#     self.c_subscriber.rem_callback(self._on_receive)
+#     self.callback = None
+
+#   def _on_receive(self, topic_name, msg, time):
+#     self.callback(topic_name, msg, time)    
 
 
 class RosOdometryPublisher:
@@ -96,8 +97,8 @@ class RosOdometryPublisher:
 
     def __init__(self, ros_tf_prefix : str, topic : str, use_monotonic : bool, no_tf_publisher : bool) -> None:
         self.first_message = True
-        print("topic:",topic)
         self.ros_odom_pub = rospy.Publisher(topic, Odometry, queue_size=10)
+        # self.ros_odom_pub = rospy.Publisher('/mavros/odometry/out', Odometry, queue_size=10)
         self.viostate_pub = rospy.Publisher('/vision/vio_state', VioState, queue_size=10)
         self.use_monotonic = use_monotonic
         self.no_tf_publisher = no_tf_publisher
@@ -197,11 +198,12 @@ class RosOdometryPublisher:
                 self.first_message = False
 
             if odometryMsg.header.seq % 100 == 0:
-                print(f"seq = {odometryMsg.header.seq}")
-                print(f"latency device = {odometryMsg.header.latencyDevice / 1e6} ms")
-                print(f"latency host = {odometryMsg.header.latencyHost / 1e6} ms")
-                print(f"position = {odometryMsg.pose.position.x}, {odometryMsg.pose.position.y}, {odometryMsg.pose.position.z}")
-                print(f"orientation = {odometryMsg.pose.orientation.w}, {odometryMsg.pose.orientation.x}, {odometryMsg.pose.orientation.y}, {odometryMsg.pose.orientation.z}")
+                # print(f"seq = {odometryMsg.header.seq}")
+                # print(f"latency device = {odometryMsg.header.latencyDevice / 1e6} ms")
+                # print(f"latency host = {odometryMsg.header.latencyHost / 1e6} ms")
+                # print(f"position = {odometryMsg.pose.position.x}, {odometryMsg.pose.position.y}, {odometryMsg.pose.position.z}")
+                # print(f"orientation = {odometryMsg.pose.orientation.w}, {odometryMsg.pose.orientation.x}, {odometryMsg.pose.orientation.y}, {odometryMsg.pose.orientation.z}")
+                # print(f"PoseCovariance:\n {odometryMsg.poseCovariance} \n TwistCovariance:\n {odometryMsg.twistCovariance}")
                 
 
                 if self.use_monotonic:
@@ -232,6 +234,10 @@ class RosOdometryPublisher:
                 ros_msg.header.frame_id = self.ros_tf_prefix + "odom"
                 ros_msg.child_frame_id = self.ros_tf_prefix + "base_link"
 
+            #For test purpose only
+            # ros_msg.header.frame_id = "odom"
+            # ros_msg.child_frame_id = "base_link"
+
             ros_msg.pose.pose.position.x = odometryMsg.pose.position.x
             ros_msg.pose.pose.position.y = odometryMsg.pose.position.y
             ros_msg.pose.pose.position.z = odometryMsg.pose.position.z
@@ -241,14 +247,27 @@ class RosOdometryPublisher:
             ros_msg.pose.pose.orientation.y = odometryMsg.pose.orientation.y
             ros_msg.pose.pose.orientation.z = odometryMsg.pose.orientation.z
 
+            # ros_msg.pose.covariance = odometryMsg.poseCovariance
+
+            ros_msg.twist.twist.linear.x = odometryMsg.twist.linear.x
+            ros_msg.twist.twist.linear.y = odometryMsg.twist.linear.y
+            ros_msg.twist.twist.linear.z = odometryMsg.twist.linear.z
+
+            ros_msg.twist.twist.angular.x = odometryMsg.twist.angular.x
+            ros_msg.twist.twist.angular.y = odometryMsg.twist.angular.y
+            ros_msg.twist.twist.angular.z = odometryMsg.twist.angular.z
+
+            # ros_msg.twist.covariance = odometryMsg.twistCovariance
+
             vio_state = VioState();
             vio_state.header.seq = odometryMsg.header.seq
             vio_state.header.stamp = rospy.Time.now()
             vio_state.header.frame_id = "odom"
             vio_state.vision_failure = odometryMsg.metricVisionFailureLikelihood
             vio_state.inertial_failure = odometryMsg.metricInertialFailureLikelihood
-            vio_state.failure_drfit = odometryMsg.estimatedFailureModeDrift
+            vio_state.failure_drift = odometryMsg.estimatedFailureModeDrift
             vio_state.vio_failure = odometryMsg.metricFailureVio
+            vio_state.reset_counter = odometryMsg.resetCounter
 
             self.viostate_pub.publish(vio_state)
 
@@ -274,6 +293,7 @@ class RosOdometryPublisher:
             tf_msg.transform.rotation = ros_msg.pose.pose.orientation
 
             self.publish_tf(tf_msg)
+            rospy.loginfo("eCAL-ROS Bridge Active")
 
 
 def main():  
@@ -309,7 +329,7 @@ def main():
     print(f"ecal-ros bridge subscribe topic: {args.ecal_topic_in}")
     sub = ByteSubscriber(args.ecal_topic_in)
     sub.set_callback(ros_odometry_pub.callback)
-    rospy.loginfo("eCAL-ROS Bridge Active")
+    
     
     # idle main thread
     # while ecal_core.ok():

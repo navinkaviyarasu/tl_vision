@@ -5,6 +5,7 @@
 # Subscribe odometry from /S0/basalt/odom to ensure proper data retrieval
 # In addition to publish data to /mavros/odometry/out, data is also 
 # broadcasted to tf for frames base_link and odom to complete the tf tree
+# Added twist data to the odometry pipeline
 #
 #_________________________________________________#
 
@@ -49,6 +50,12 @@ class TFToOdometry:
                 odometry_msg.pose.pose.orientation.y = odom_data.pose.pose.orientation.y
                 odometry_msg.pose.pose.orientation.z = odom_data.pose.pose.orientation.z
                 odometry_msg.pose.pose.orientation.w = odom_data.pose.pose.orientation.w
+                odometry_msg.twist.twist.linear.x = odom_data.twist.twist.linear.x
+                odometry_msg.twist.twist.linear.y = odom_data.twist.twist.linear.y
+                odometry_msg.twist.twist.linear.z = odom_data.twist.twist.linear.z
+                odometry_msg.twist.twist.angular.x = odom_data.twist.twist.angular.x
+                odometry_msg.twist.twist.angular.y = odom_data.twist.twist.angular.y
+                odometry_msg.twist.twist.angular.z = odom_data.twist.twist.angular.z
                 
                 tf_pose = odometry_msg.pose.pose
                 
