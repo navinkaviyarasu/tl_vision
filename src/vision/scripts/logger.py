@@ -50,6 +50,7 @@ def create_excel_file(filename):
 
     wb.save(filename)
     rospy.loginfo(f"Created new Excel file with sheets: {filename}")
+    return wb
 
 def vicon_callback(msg, wb):
     ws = wb["vicon"]
@@ -76,11 +77,14 @@ def ekf_callback(msg, wb):
     wb.save(filename)
 
 def viostate_callback(msg, wb):
-    ws = wb["vio_state"]
-    ws.append([rospy.get_time(), msg.header.seq, msg.header.stamp, 
-               msg.header.frame_id, msg.vision_failure, msg.inertial_failure, 
-               msg.failure_drift, msg.vio_failure, msg.reset_counter])
-    wb.save(filename)
+    try:
+        ws = wb["vio_state"]
+        ws.append([rospy.get_time(), msg.header.seq, msg.header.stamp, 
+                   msg.header.frame_id, msg.vision_failure, msg.inertial_failure, 
+                   msg.failure_drift, msg.vio_failure, msg.reset_counter])
+        wb.save(filename)
+    except Exception as e:
+        rospy.logerr(f"Error:{e}")
 
 # def imu_callback(msg, wb):
 #     ws = wb["IMU Data"]
