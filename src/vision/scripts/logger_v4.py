@@ -69,9 +69,9 @@ def listener():
 
     # Subscribe to the relevant topics
     rospy.Subscriber('/vision/vio_state', VioState, lambda msg: viostate_callback(msg, vio_state_writer))
-    # rospy.Subscriber('/vrpn_client_node/Akira/pose', PoseStamped, lambda msg: vicon_callback(msg, vicon_writer))
-    # rospy.Subscriber('S0/basalt/odom', Odometry, lambda msg: odometry_callback(msg, vio_writer))
-    # rospy.Subscriber('/mavros/local_position/pose', PoseStamped, lambda msg: ekf_callback(msg, ekf_writer))
+    rospy.Subscriber('/vrpn_client_node/Akira/pose', PoseStamped, lambda msg: vicon_callback(msg, vicon_writer))
+    rospy.Subscriber('S0/basalt/odom', Odometry, lambda msg: odometry_callback(msg, vio_writer))
+    rospy.Subscriber('/mavros/local_position/pose', PoseStamped, lambda msg: ekf_callback(msg, ekf_writer))
 
     rospy.spin()
 

@@ -301,7 +301,7 @@ def main():
     # print eCAL version and date
     print("eCAL {} ({})\n".format(ecal_core.getversion(), ecal_core.getdate()))
 
-    topic_ecal = "S1/vio_odom"
+    topic_ecal = "S0/vio_odom"
     topic_ros = "/basalt/odom"
 
     parser = argparse.ArgumentParser()
